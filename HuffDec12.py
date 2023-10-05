@@ -6,7 +6,7 @@ def cwDec(w): # Convert 16-bit value to string codeword
   return bin(0x10000 | w).rstrip('0')[3:-1]
 
 def cwEnc(cw): # Convert string codeword to 16-bit value
-  return int((cw+'1').ljust(16, '0'), 2)
+  return int(f'{cw}1'.ljust(16, '0'), 2)
 
 #***************************************************************************
 #***************************************************************************
@@ -63,7 +63,7 @@ def HuffTabPack_text(dLen, d, mode=None):
       v = "" if cb is None else "??"*cb
     else: v = v.encode("hex").upper()
     pad = '\t'*(2 - len(cw)/8)
-    r.append("%s%s%s" % (cw, pad, v))
+    r.append(f"{cw}{pad}{v}")
   return "\n".join(r)
 
 #***************************************************************************
@@ -137,7 +137,8 @@ class HuffDecoder(object):
     sv = set() # Set for values
     d = {}
     for cw, cb, v in items:
-      if cw in d: raise Error("Codeword %s already defined" % cw)
+      if cw in d:
+        raise Error(f"Codeword {cw} already defined")
 
       if cb is None: continue
       cbKnown = self.dLen.get(cw, None)
@@ -156,7 +157,7 @@ class HuffDecoder(object):
     n, = self.fmtInt.unpack_from(ab)
     o = self.fmtInt.size
     self.dLen, self.adTab = {}, []
-    for i in xrange(n):
+    for _ in xrange(n):
       cb, = self.fmtInt.unpack_from(ab, o)
       o += self.fmtInt.size
       data = ab[o:o+cb]
@@ -175,7 +176,7 @@ class HuffDecoder(object):
     if names is None: names = self.NAMES
     self.dLen, self.adTab = {}, []
     for name in names:
-      with open(os.path.join(self.baseDir, "%s.txt" % name)) as fi:
+      with open(os.path.join(self.baseDir, f"{name}.txt")) as fi:
         self.loadTable(HuffTabReader_text(fi.read()))
 
   def saveTables(self, mode=None, names=None):
@@ -221,7 +222,8 @@ class HuffDecoder(object):
     cb = 0
     while cb < self.BLOCK_SIZE: # Block length
       node = self.aMap[v & self.mask]
-      if node.nBits is None: raise Error("Unknown codeword %s* length" % node.cw)
+      if node.nBits is None:
+        raise Error(f"Unknown codeword {node.cw}* length")
       yield node
       v >>= node.nBits
       if node.cb is not None: cb += node.cb
@@ -271,6 +273,6 @@ def main(argv):
     with open(fn, "rb") as fi: ab = fi.read()
     nChunks, = struct.unpack_from("<L", ab)
     ab = hd.decompress(ab[4:], nChunks * hd.BLOCK_SIZE)
-    with open(os.path.splitext(fn)[0] + ".mod", "wb") as fo: fo.write(ab)
+    with open(f"{os.path.splitext(fn)[0]}.mod", "wb") as fo: fo.write(ab)
 
 if __name__=="__main__": main(sys.argv)

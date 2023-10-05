@@ -95,8 +95,8 @@ args_lzma = {
 def LZMA_decompress(compdata):
   process = subprocess.Popen(args_lzma, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   output, errout = process.communicate(compdata)
-  retcode = process.poll()
-  if retcode: raise Error(errout)
+  if retcode := process.poll():
+    raise Error(errout)
   return output
 
 def decompress(data, compType, length):
@@ -161,7 +161,7 @@ class Extension(object):
       lst = []
       while stR.o < len(stR.ab): lst.append(cls(stR))
     else:
-      lst = [cls(stR) for i in xrange(cnt)]
+      lst = [cls(stR) for _ in xrange(cnt)]
     stR.done()
     setattr(self, self.LIST, lst)
 
@@ -302,7 +302,8 @@ class Init_Script_Flags: # !!! Not sure...
 
   def __str__(self):
     r = ListTrueBools(self, self.INIT_SCRIPT_FLAGS)
-    if self.RestartPolicy: r.append("Restart %s" % self.dRestart[self.RestartPolicy])
+    if self.RestartPolicy:
+      r.append(f"Restart {self.dRestart[self.RestartPolicy]}")
     return ", ".join(r)
 
 #***************************************************************************
@@ -1055,7 +1056,7 @@ class CPD_Manifest:
     assert 4*self.size == len(ab)
     Ext_ParseAll(self, ab, 4*self.length) # Parse all Extensions
 
-    if 12 == self.version_major: g.HuffDecoder = HuffDecoder12
+    if self.version_major == 12: g.HuffDecoder = HuffDecoder12
 
   def dump(self, flog=sys.stdout):
     print >>flog, "CPD Manifest"
@@ -1274,7 +1275,7 @@ class HUFF_chunks:
     return opt, self.data[offs:end]
 
   def dump(self, baseName):
-    chunksDir = baseName + ".chunks"
+    chunksDir = f"{baseName}.chunks"
     if not os.path.exists(chunksDir): os.makedirs(chunksDir)
     for iChunk in xrange(self.nChunks): # Verify chunks
       opt, ab = self[iChunk]
@@ -1360,7 +1361,7 @@ class FPT: # Flash Partition Table
   def __init__(self, ab, base=0):
     self.stR = StructReader(ab, base)
     self.stR.read(self, self.FPT_HEADER) # Read header
-    self.partitions = [FPT_Entry(self) for i in xrange(self.NumFptEntries)] # Read entries
+    self.partitions = [FPT_Entry(self) for _ in xrange(self.NumFptEntries)]
 
   def dump(self, flog=sys.stdout, baseDir=None):
     print >>flog, "NumFptEntries:  %d" % self.NumFptEntries
